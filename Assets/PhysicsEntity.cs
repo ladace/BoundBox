@@ -37,10 +37,6 @@ public class PhysicsEntity : MonoBehaviour {
 	public bool immovable = false;
 	public bool trigger = false;
 
-	public enum EntityType { OBJECT, EVENT }
-	public EntityType entityType = EntityType.OBJECT;
-	public int massGroup = 0;
-
 	public bool debugLog = false;
 
 	void Start () {
@@ -61,42 +57,13 @@ public class PhysicsEntity : MonoBehaviour {
 	}
 	// return the shortest recover distance -> move `this` out of `other`
 	public Vector2? Intersect (PhysicsEntity other) {
-		return IntersectRect(other.shape, other.transform.position, other.transform.rotation);
+		return IntersectRect(other.shape, other.transform.position);
 	}
 
-	public Vector2? IntersectRect (Rect rc, Vector3 offset, Quaternion otherRotation) {
-		if (transform.rotation == Quaternion.identity && otherRotation == Quaternion.identity)
-			return IntersectOrtho(GetWorldRectOrtho(rc, offset));
-		else {
-			// TODO Unchecked after refactoring
-			Rect aRc = shape,
-				 bRc = rc;
+	public Vector2? IntersectRect (Rect rc, Vector3 offset) {
+		return IntersectOrtho(GetWorldRectOrtho(rc, offset));
+	}
 
-			Vector2? minCross = null;
-			foreach (Vector2 axis in Geometry.AxesOfRotatedRect(transform.rotation)) {
-				if (!_IntersectRectOnAxis (aRc, bRc, offset, otherRotation, axis, ref minCross)) return null;
-			}
-			foreach (Vector2 axis in Geometry.AxesOfRotatedRect(otherRotation)) {
-				if (!_IntersectRectOnAxis (aRc, bRc, offset, otherRotation, axis, ref minCross)) return null;
-			}
-			return minCross;
-		}
-	}
-	private bool _IntersectRectOnAxis (Rect aRc, Rect bRc, Vector3 offset, Quaternion rotation, Vector2 axis, ref Vector2? minCross) {
-		var aR = Geometry.ProjectRect(aRc, transform.position, transform.rotation, axis);
-		var bR = Geometry.ProjectRect(bRc, offset, rotation, axis);
-		// the shortest distance to move aR out of bR
-		float overl = Utils.SegmentInto(aR, bR);
-		if (overl == 0) return false;
-		else {
-			if (minCross.HasValue) {
-				if (Mathf.Abs(overl) < minCross.Value.magnitude) {
-					minCross = overl * axis;
-				}
-			} else minCross = overl * axis;
-			return true;
-		}
-	}
 	public Vector2? IntersectOrtho (Rect otherRect) {
 		Rect rc = GetWorldRectOrtho();
 
@@ -135,21 +102,12 @@ public class PhysicsEntity : MonoBehaviour {
 	}
 
 	public bool HitTest (PhysicsEntity other) {
-		return IntersectRect(other.shape, other.transform.position, other.transform.rotation).HasValue;
+		return IntersectRect(other.shape, other.transform.position).HasValue;
 	}
 
 	void OnDrawGizmos () {
 		Color color = Color.blue;
-		switch (entityType) {
-		case EntityType.OBJECT:
-			color = Color.blue;
-			break;
-		case EntityType.EVENT:
-			color = Color.yellow;
-			break;
-		}
 		Rect rc = shape;
-
-		Utils.DrawRectGizmos(rc, color, transform.position, transform.rotation);
+		Utils.DrawRectGizmos(rc, color, transform.position, Quaternion.identity);//transform.rotation);
 	}
 }

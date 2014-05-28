@@ -46,8 +46,8 @@ public class PhysicsWorld : MonoBehaviour {
 			a.SendMessage("OnColliding", info, SendMessageOptions.DontRequireReceiver);
 			b.SendMessage("OnColliding", oInfo, SendMessageOptions.DontRequireReceiver);
 			if (!(a.trigger || b.trigger || info.canceled || oInfo.canceled)){
-				if (!a.immovable && (a.massGroup <= b.massGroup || b.immovable)) a.transform.position += (Vector3)srp.Value;
-				else if (!b.immovable && (a.massGroup >= b.massGroup || a.immovable)) b.transform.position -= (Vector3)srp.Value;
+				if (!a.immovable) a.transform.position += (Vector3)srp.Value;
+				else if (!b.immovable && a.immovable) b.transform.position -= (Vector3)srp.Value;
 			}
 		}
 	}
@@ -57,11 +57,11 @@ public class PhysicsWorld : MonoBehaviour {
 
 	public bool CheckRect (Rect rc) { // unchecked
 		foreach (PhysicsEntity obj in dynList) {
-			if (obj.IntersectRect(rc, Vector3.zero, Quaternion.identity).HasValue)
+			if (obj.IntersectRect(rc, Vector3.zero).HasValue)
 				return true;
 		}
 		foreach (PhysicsEntity obj in stcList) {
-			if (obj.IntersectRect(rc, Vector3.zero, Quaternion.identity).HasValue)
+			if (obj.IntersectRect(rc, Vector3.zero).HasValue)
 				return true;
 		}
 		return false;
