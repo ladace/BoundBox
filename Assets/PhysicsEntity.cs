@@ -30,12 +30,10 @@ public class CollisionInfo {
 	}
 }
 
-// 2D physic object
-[AddComponentMenu("Boss Physics/PhysicsEntity")]
+[AddComponentMenu("Physics/PhysicsEntity")]
 
 public class PhysicsEntity : MonoBehaviour {
-	public bool immovable = false;
-	public bool trigger = false;
+	public bool immovable = false; // now it can't be changed during the game
 
 	public bool debugLog = false;
 
@@ -55,33 +53,6 @@ public class PhysicsEntity : MonoBehaviour {
 	public bool _RoughTestIntersecting (PhysicsEntity other) {
 		return ((Vector2)this.transform.position - (Vector2)other.transform.position).magnitude <= this.shapeRadius + other.shapeRadius;
 	}
-	// return the shortest recover distance -> move `this` out of `other`
-	public Vector2? Intersect (PhysicsEntity other) {
-		return IntersectRect(other.shape, other.transform.position);
-	}
-
-	public Vector2? IntersectRect (Rect rc, Vector3 offset) {
-		return IntersectOrtho(GetWorldRectOrtho(rc, offset));
-	}
-
-	public Vector2? IntersectOrtho (Rect otherRect) {
-		Rect rc = GetWorldRectOrtho();
-
-		if (rc.x < otherRect.x + otherRect.width && rc.y < otherRect.y + otherRect.height
-			&& rc.x + rc.width > otherRect.x && rc.y + rc.height > otherRect.y) {
-			Vector2[] d = new Vector2[] { new Vector2(otherRect.x + otherRect.width - rc.x, 0),
-										  new Vector2(otherRect.x - rc.x - rc.width, 0),
-										  new Vector2(0, otherRect.y + otherRect.height - rc.y),
-										  new Vector2(0, otherRect.y - rc.y - rc.height) };
-			Vector2 ret = d[0];
-			foreach (Vector2 v in d) {
-
-				if (v.magnitude < ret.magnitude)
-					ret = v;
-			}
-			return ret;
-		} else return null;
-	}
 
 	static public Rect GetWorldRectOrtho (Rect shape, Vector3 offset) {
 		Rect rc = shape;
@@ -99,10 +70,6 @@ public class PhysicsEntity : MonoBehaviour {
 			return new Rect(rc.x + transform.position.x, rc.y + transform.position.y, rc.width, rc.height).Contains(point);
 		}
 		return false;//Todo: For rotated rects Undone yet
-	}
-
-	public bool HitTest (PhysicsEntity other) {
-		return IntersectRect(other.shape, other.transform.position).HasValue;
 	}
 
 	void OnDrawGizmos () {

@@ -22,48 +22,88 @@ public class PhysicsWorld : MonoBehaviour {
 		else stcList.Remove(obj);
 	}
 
-	void Update() {
-		for (int i = 0; i < dynList.Count; ++i) {
-			for (int j = 0; j < stcList.Count; ++j) {
-				Solve(dynList[i], stcList[j]);
-			}
-		}
+	void Update () {
+		Pass();
+		Pass();
+	}
 
+	void Pass () {
 		for (int i = 0; i < dynList.Count; ++i) {
-			for (int j = i + 1; j < dynList.Count; ++j) {
-				Solve(dynList[i], dynList[j]);
+			var obj = dynList[i];
+			var h = CheckH(obj, i);
+			var v = CheckV(obj, i);
+			if (Mathf.Abs(h) < Mathf.Abs(v)) {
+				obj.transform.position += h * Vector3.right;
+			} else {
+				obj.transform.position += v * Vector3.up;
 			}
 		}
 	}
 
-	public void Solve (PhysicsEntity a, PhysicsEntity b) {
-		if (!a._RoughTestIntersecting(b)) return;
-
-		Vector2? srp = a.Intersect(b);
-		if (srp.HasValue) {
-			CollisionInfo info = new CollisionInfo(a, b, srp.Value.normalized);
-			CollisionInfo oInfo = info.GetOtherInfo();
-			a.SendMessage("OnColliding", info, SendMessageOptions.DontRequireReceiver);
-			b.SendMessage("OnColliding", oInfo, SendMessageOptions.DontRequireReceiver);
-			if (!(a.trigger || b.trigger || info.canceled || oInfo.canceled)){
-				if (!a.immovable) a.transform.position += (Vector3)srp.Value;
-				else if (!b.immovable && a.immovable) b.transform.position -= (Vector3)srp.Value;
-			}
+	private float CheckH (PhysicsEntity obj, int i) {
+		var objRc = obj.GetWorldRectOrtho();
+		float hShortest = 0;
+		for (int j = 0; j < stcList.Count; ++j) {
+			float h = HIntersectDepth(objRc, stcList[j].GetWorldRectOrtho());
+			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) hShortest = h;
 		}
+		for (int j = i + 1; j < dynList.Count; ++j) {
+			float h = HIntersectDepth(objRc, dynList[j].GetWorldRectOrtho());
+			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) hShortest = h;
+		}
+
+		return hShortest;
+	}
+
+	private float CheckV (PhysicsEntity obj, int i) {
+		var objRc = obj.GetWorldRectOrtho();
+		float vShortest = 0;
+		for (int j = 0; j < stcList.Count; ++j) {
+			float v = VIntersectDepth(objRc, stcList[j].GetWorldRectOrtho());
+			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) vShortest = v;
+		}
+		for (int j = i + 1; j < dynList.Count; ++j) {
+			float v = VIntersectDepth(objRc, dynList[j].GetWorldRectOrtho());
+			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) vShortest = v;
+		}
+
+		return vShortest;
+	}
+
+	public bool RectOverlap (Rect a, Rect b) {
+		return a.xMax > b.xMin && a.xMin < b.xMax && a.yMax > b.yMin && a.yMin < b.yMax;
+	}
+
+	public float HIntersectDepth (Rect a, Rect b) {
+		if (RectOverlap(a, b)) {
+			float d1 = a.xMax - b.xMin,
+				  d2 = b.xMax - a.xMin;
+			if (d1 < d2) return -d1;
+			else return d2;
+		} else return 0;
+	}
+
+	public float VIntersectDepth (Rect a, Rect b) {
+		if (RectOverlap(a, b)) {
+			float d1 = a.yMax - b.yMin,
+				  d2 = b.yMax - a.yMin;
+			if (d1 < d2) return -d1;
+			else return d2;
+		} else return 0;
 	}
 
 	// --
 	// Available functions
 
-	public bool CheckRect (Rect rc) { // unchecked
-		foreach (PhysicsEntity obj in dynList) {
-			if (obj.IntersectRect(rc, Vector3.zero).HasValue)
-				return true;
-		}
-		foreach (PhysicsEntity obj in stcList) {
-			if (obj.IntersectRect(rc, Vector3.zero).HasValue)
-				return true;
-		}
-		return false;
-	}
+	// public bool CheckRect (Rect rc) { // unchecked
+	// 	foreach (PhysicsEntity obj in dynList) {
+	// 		if (obj.IntersectRect(rc, Vector3.zero).HasValue)
+	// 			return true;
+	// 	}
+	// 	foreach (PhysicsEntity obj in stcList) {
+	// 		if (obj.IntersectRect(rc, Vector3.zero).HasValue)
+	// 			return true;
+	// 	}
+	// 	return false;
+	// }
 }
