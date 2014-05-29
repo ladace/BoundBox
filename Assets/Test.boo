@@ -8,3 +8,6 @@ class Test (MonoBehaviour):
 	def Update ():
 		transform.position.x += Input.GetAxis("Horizontal") * Time.deltaTime
 		transform.position.y += Input.GetAxis("Vertical") * Time.deltaTime
+
+	def OnCollide (info):
+		print ("Collide!")

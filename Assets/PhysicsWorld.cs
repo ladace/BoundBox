@@ -32,42 +32,67 @@ public class PhysicsWorld : MonoBehaviour {
 			var obj = dynList[i];
 			var h = CheckH(obj, i);
 			var v = CheckV(obj, i);
-			if (Mathf.Abs(h) < Mathf.Abs(v)) {
-				obj.transform.position += h * Vector3.right;
+			if (h.Item1 == 0 || v.Item1 == 0) continue;
+			if (Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1)) {
+				obj.transform.position += h.Item1 * Vector3.right;
+
+				var normal = (h.Item1 * Vector3.right).normalized;
+				var collisionInfo = new CollisionInfo(obj, h.Item2, normal);
+				obj.SendMessage("OnCollide", collisionInfo, SendMessageOptions.DontRequireReceiver);
+				h.Item2.SendMessage("OnCollide", collisionInfo.GetOtherInfo(), SendMessageOptions.DontRequireReceiver);;
 			} else {
-				obj.transform.position += v * Vector3.up;
+				obj.transform.position += v.Item1 * Vector3.up;
+			
+				var normal = (v.Item1 * Vector3.up).normalized;
+				var collisionInfo = new CollisionInfo(obj, v.Item2, normal);
+				obj.SendMessage("OnCollide", collisionInfo, SendMessageOptions.DontRequireReceiver);
+				v.Item2.SendMessage("OnCollide", collisionInfo.GetOtherInfo(), SendMessageOptions.DontRequireReceiver);;
 			}
 		}
 	}
 
-	private float CheckH (PhysicsEntity obj, int i) {
+	private Tuple<float, PhysicsEntity> CheckH (PhysicsEntity obj, int i) {
 		var objRc = obj.GetWorldRectOrtho();
 		float hShortest = 0;
+		PhysicsEntity other = null;
 		for (int j = 0; j < stcList.Count; ++j) {
 			float h = HIntersectDepth(objRc, stcList[j].GetWorldRectOrtho());
-			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) hShortest = h;
+			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) {
+				hShortest = h;
+				other = stcList[j];
+			}
 		}
 		for (int j = i + 1; j < dynList.Count; ++j) {
 			float h = HIntersectDepth(objRc, dynList[j].GetWorldRectOrtho());
-			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) hShortest = h;
+			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) {
+				hShortest = h;
+				other = dynList[j];
+			}
 		}
 
-		return hShortest;
+		return new Tuple<float, PhysicsEntity>(hShortest, other);
 	}
 
-	private float CheckV (PhysicsEntity obj, int i) {
+	private Tuple<float, PhysicsEntity> CheckV (PhysicsEntity obj, int i) {
 		var objRc = obj.GetWorldRectOrtho();
 		float vShortest = 0;
+		PhysicsEntity other = null;
 		for (int j = 0; j < stcList.Count; ++j) {
 			float v = VIntersectDepth(objRc, stcList[j].GetWorldRectOrtho());
-			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) vShortest = v;
+			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) {
+				vShortest = v;
+				other = stcList[j];
+			}
 		}
 		for (int j = i + 1; j < dynList.Count; ++j) {
 			float v = VIntersectDepth(objRc, dynList[j].GetWorldRectOrtho());
-			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) vShortest = v;
+			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) {
+				vShortest = v;
+				other = dynList[j];
+			}
 		}
 
-		return vShortest;
+		return new Tuple<float, PhysicsEntity>(vShortest, other);
 	}
 
 	public bool RectOverlap (Rect a, Rect b) {

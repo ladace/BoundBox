@@ -6,10 +6,7 @@ using Eppy;
 public class CollisionInfo {
 	private PhysicsEntity a, b;
 	private Vector2 _normal;
-	private bool _canceled = false;
-	public bool canceled {
-		get { return _canceled; }
-	}
+
 	public Vector2 normal {
 		get { return _normal; }
 	}
@@ -23,10 +20,6 @@ public class CollisionInfo {
 	}
 	public CollisionInfo GetOtherInfo () {
 		return new CollisionInfo(b, a, -normal);
-	}
-
-	public void CancelCollision () {
-		_canceled = true;
 	}
 }
 
