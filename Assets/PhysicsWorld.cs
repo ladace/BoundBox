@@ -60,56 +60,68 @@ public class PhysicsWorld : MonoBehaviour {
 
 	private Tuple<float, PhysicsEntity> CheckH (PhysicsEntity obj, int i) {
 		var objRc = obj.GetWorldRectOrtho();
-		float hShortest = 0;
-		PhysicsEntity other = null;
+		float hLeft = 0,
+			  hRight = 0;
+		PhysicsEntity oLeft = null,
+					  oRight = null;
 
 		foreach (PhysicsEntity o in GetHitObjects(i)) {
-			float h = HIntersectDepth(objRc, o.GetWorldRectOrtho());
-			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) {
-				hShortest = h;
-				other = o;
-			}			
+			var h = HIntersectDepth(objRc, o.GetWorldRectOrtho());
+			if (h.Item1 < hLeft) { hLeft = h.Item1; oLeft = o; }
+			if (h.Item2 > hRight) { hRight = h.Item2; oRight = o; }
 		}
-
-		return new Tuple<float, PhysicsEntity>(hShortest, other);
+		if (Mathf.Abs(hLeft) < Mathf.Abs(hRight)) {
+			return new Tuple<float, PhysicsEntity>(hLeft, oLeft);
+		} else {
+			return new Tuple<float, PhysicsEntity>(hRight, oRight);
+		}
 	}
 
 	private Tuple<float, PhysicsEntity> CheckV (PhysicsEntity obj, int i) {
 		var objRc = obj.GetWorldRectOrtho();
-		float vShortest = 0;
-		PhysicsEntity other = null;
+		float vUp = 0,
+			  vDown = 0;
+		PhysicsEntity oUp = null,
+					  oDown = null;
 
 		foreach (PhysicsEntity o in GetHitObjects(i)) {
-			float v = VIntersectDepth(objRc, o.GetWorldRectOrtho());
-			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) {
-				vShortest = v;
-				other = o;
-			}
+			var v = VIntersectDepth(objRc, o.GetWorldRectOrtho());
+			if (v.Item1 < vDown) { vDown = v.Item1; oDown = o; }
+			if (v.Item2 > vUp) { vUp = v.Item2; oUp = o; }
 		}
 
-		return new Tuple<float, PhysicsEntity>(vShortest, other);
+		if (Mathf.Abs(vUp) < Mathf.Abs(vDown)) {
+			return new Tuple<float, PhysicsEntity>(vUp, oUp);
+		} else {
+			return new Tuple<float, PhysicsEntity>(vDown, oDown);
+		}
+
 	}
 
 	public bool RectOverlap (Rect a, Rect b) {
 		return a.xMax > b.xMin && a.xMin < b.xMax && a.yMax > b.yMin && a.yMin < b.yMax;
 	}
 
-	public float HIntersectDepth (Rect a, Rect b) {
+	// return the distance a should move
+	// position - move right
+	// negative - move left
+	public Tuple<float, float> HIntersectDepth (Rect a, Rect b) {
 		if (RectOverlap(a, b)) {
 			float d1 = a.xMax - b.xMin,
 				  d2 = b.xMax - a.xMin;
-			if (d1 < d2) return -d1;
-			else return d2;
-		} else return 0;
+			return new Tuple<float, float>(-d1, d2);
+		} else return new Tuple<float, float>(0, 0);
 	}
 
-	public float VIntersectDepth (Rect a, Rect b) {
+	// return the distance a should move
+	// position - move up
+	// negative - move down
+	public Tuple<float, float> VIntersectDepth (Rect a, Rect b) {
 		if (RectOverlap(a, b)) {
 			float d1 = a.yMax - b.yMin,
 				  d2 = b.yMax - a.yMin;
-			if (d1 < d2) return -d1;
-			else return d2;
-		} else return 0;
+			return new Tuple<float, float>(-d1, d2);
+		} else return new Tuple<float, float>(0, 0);
 	}
 
 	// --
