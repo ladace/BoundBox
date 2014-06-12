@@ -51,23 +51,24 @@ public class PhysicsWorld : MonoBehaviour {
 		}
 	}
 
+	private IEnumerable<PhysicsEntity> GetHitObjects (int i) {
+		for (int j = 0; j < stcList.Count; ++j)
+			yield return stcList[j];
+		for (int j = i + 1; j < dynList.Count; ++j)
+			yield return dynList[j];
+	}
+
 	private Tuple<float, PhysicsEntity> CheckH (PhysicsEntity obj, int i) {
 		var objRc = obj.GetWorldRectOrtho();
 		float hShortest = 0;
 		PhysicsEntity other = null;
-		for (int j = 0; j < stcList.Count; ++j) {
-			float h = HIntersectDepth(objRc, stcList[j].GetWorldRectOrtho());
+
+		foreach (PhysicsEntity o in GetHitObjects(i)) {
+			float h = HIntersectDepth(objRc, o.GetWorldRectOrtho());
 			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) {
 				hShortest = h;
-				other = stcList[j];
-			}
-		}
-		for (int j = i + 1; j < dynList.Count; ++j) {
-			float h = HIntersectDepth(objRc, dynList[j].GetWorldRectOrtho());
-			if (Mathf.Abs(h) > Mathf.Abs(hShortest)) {
-				hShortest = h;
-				other = dynList[j];
-			}
+				other = o;
+			}			
 		}
 
 		return new Tuple<float, PhysicsEntity>(hShortest, other);
@@ -77,18 +78,12 @@ public class PhysicsWorld : MonoBehaviour {
 		var objRc = obj.GetWorldRectOrtho();
 		float vShortest = 0;
 		PhysicsEntity other = null;
-		for (int j = 0; j < stcList.Count; ++j) {
-			float v = VIntersectDepth(objRc, stcList[j].GetWorldRectOrtho());
+
+		foreach (PhysicsEntity o in GetHitObjects(i)) {
+			float v = VIntersectDepth(objRc, o.GetWorldRectOrtho());
 			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) {
 				vShortest = v;
-				other = stcList[j];
-			}
-		}
-		for (int j = i + 1; j < dynList.Count; ++j) {
-			float v = VIntersectDepth(objRc, dynList[j].GetWorldRectOrtho());
-			if (Mathf.Abs(v) > Mathf.Abs(vShortest)) {
-				vShortest = v;
-				other = dynList[j];
+				other = o;
 			}
 		}
 
