@@ -30,9 +30,20 @@ public class PhysicsEntity : MonoBehaviour {
 
 	public bool debugLog = false;
 
+	public Vector3 oldPosition;
+
+	void Awake () {
+		oldPosition = transform.position;
+	}
+
 	void Start () {
 		PhysicsWorld.ins.Add(this);
 	}
+
+	public void PhysicsUpdate () {
+		oldPosition = transform.position;
+	}
+
 	public void OnDestroy() {
 		PhysicsWorld.ins.Remove(this);
 	}

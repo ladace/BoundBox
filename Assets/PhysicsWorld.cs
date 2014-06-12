@@ -23,8 +23,14 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	void Update () {
+		foreach (var e in dynList) {
+			Debug.Log(e.transform.position - e.oldPosition);
+		}
 		Pass();
 		Pass();
+		foreach (var e in dynList) {
+			e.PhysicsUpdate();
+		}
 	}
 
 	void Pass () {
@@ -32,8 +38,8 @@ public class PhysicsWorld : MonoBehaviour {
 			var obj = dynList[i];
 			var h = CheckH(obj, i);
 			var v = CheckV(obj, i);
-			if (h.Item1 == 0 || v.Item1 == 0) continue;
-			if (Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1)) {
+			if (h.Item1 == 0 && v.Item1 == 0) continue;
+			if (h.Item1 != 0 && (v.Item1 == 0 || Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1))) {
 				obj.transform.position += h.Item1 * Vector3.right;
 
 				var normal = (h.Item1 * Vector3.right).normalized;
@@ -59,7 +65,7 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	private Tuple<float, PhysicsEntity> CheckH (PhysicsEntity obj, int i) {
-		var objRc = obj.GetWorldRectOrtho();
+		var objRc = GetOffsetRect(obj.transform.position.x, obj.oldPosition.y, obj.shape);
 		float hLeft = 0,
 			  hRight = 0;
 		PhysicsEntity oLeft = null,
@@ -78,7 +84,7 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	private Tuple<float, PhysicsEntity> CheckV (PhysicsEntity obj, int i) {
-		var objRc = obj.GetWorldRectOrtho();
+		var objRc = GetOffsetRect(obj.oldPosition.x, obj.transform.position.y, obj.shape);
 		float vUp = 0,
 			  vDown = 0;
 		PhysicsEntity oUp = null,
@@ -122,6 +128,10 @@ public class PhysicsWorld : MonoBehaviour {
 				  d2 = b.yMax - a.yMin;
 			return new Tuple<float, float>(-d1, d2);
 		} else return new Tuple<float, float>(0, 0);
+	}
+
+	static protected Rect GetOffsetRect(float x, float y, Rect rc) {
+		return new Rect(x + rc.x, y + rc.y, rc.width, rc.height);
 	}
 
 	// --
