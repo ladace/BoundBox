@@ -38,7 +38,14 @@ public class PhysicsWorld : MonoBehaviour {
 			var obj = dynList[i];
 			var h = CheckH(obj, i);
 			var v = CheckV(obj, i);
-			if (h.Item1 == 0 && v.Item1 == 0) continue;
+			if (h.Item1 == 0 && v.Item1 == 0) {
+				if (IsHitting(i)) { // it might be still hitting
+					dynList[i].transform.position = dynList[i].oldPosition;
+					// restore its position back, seeming it hits the corner
+					// not a good solution though
+				}
+				continue;
+			}
 			if (h.Item1 != 0 && (v.Item1 == 0 || Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1))) {
 				obj.transform.position += h.Item1 * Vector3.right;
 
@@ -62,6 +69,15 @@ public class PhysicsWorld : MonoBehaviour {
 			yield return stcList[j];
 		for (int j = i + 1; j < dynList.Count; ++j)
 			yield return dynList[j];
+	}
+
+	private bool IsHitting (int i) {
+		var objRc = dynList[i].GetWorldRectOrtho();
+		foreach (PhysicsEntity o in GetHitObjects(i)) {
+			if (RectOverlap(objRc, o.GetWorldRectOrtho()))
+				return true;
+		}
+		return false;
 	}
 
 	private Tuple<float, PhysicsEntity> CheckH (PhysicsEntity obj, int i) {
