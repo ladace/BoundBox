@@ -23,16 +23,17 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	void Update () {
-		Pass1();
-		Pass2();
+		SolveAll();
 		foreach (var e in dynList) {
 			e.PhysicsUpdate();
 		}
 	}
 
-	void Pass1 () {
+	void SolveAll () {
 		for (int i = 0; i < dynList.Count; ++i) {
 			var obj = dynList[i];
+
+			// pass 1
 			var h = CheckH(obj, i);
 			var v = CheckV(obj, i);
 			if (h.Item1 == 0 && v.Item1 == 0) {
@@ -57,14 +58,10 @@ public class PhysicsWorld : MonoBehaviour {
 				var normal = (v.Item1 * Vector3.up).normalized;
 				SendCollisionMessage(normal, obj, v.Item2);
 			}
-		}
-	}
 
-	void Pass2 () {
-		for (int i = 0; i < dynList.Count; ++i) {
-			var obj = dynList[i];
+			// pass 2
 			if (obj.transform.position.x != obj.oldPosition.x) {
-				var h = CheckH(obj, i);
+				h = CheckH(obj, i);
 
 				if (h.Item1 != 0) {
 					obj.transform.position += h.Item1 * Vector3.right;
@@ -76,7 +73,7 @@ public class PhysicsWorld : MonoBehaviour {
 			}
 
 			if (obj.transform.position.y != obj.oldPosition.y) {
-				var v = CheckV(obj, i);
+				v = CheckV(obj, i);
 
 				if (v.Item1 != 0) {
 					obj.transform.position += v.Item1 * Vector3.up;
