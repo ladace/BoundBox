@@ -23,45 +23,78 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	void Update () {
-		foreach (var e in dynList) {
-			Debug.Log(e.transform.position - e.oldPosition);
-		}
-		Pass();
-		Pass();
+		Pass1();
+		Pass2();
 		foreach (var e in dynList) {
 			e.PhysicsUpdate();
 		}
 	}
 
-	void Pass () {
+	void Pass1 () {
 		for (int i = 0; i < dynList.Count; ++i) {
 			var obj = dynList[i];
 			var h = CheckH(obj, i);
 			var v = CheckV(obj, i);
 			if (h.Item1 == 0 && v.Item1 == 0) {
 				if (IsHitting(i)) { // it might be still hitting
-					dynList[i].transform.position = dynList[i].oldPosition;
-					// restore its position back, seeming it hits the corner
-					// not a good solution though
+					// shift the horizontal position first
+					// the second pass will deal with the vertical movement
+					obj.oldPosition.x = obj.transform.position.x;
 				}
 				continue;
 			}
 			if (h.Item1 != 0 && (v.Item1 == 0 || Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1))) {
 				obj.transform.position += h.Item1 * Vector3.right;
+				obj.oldPosition.x = obj.transform.position.x;
 
+				// send message
 				var normal = (h.Item1 * Vector3.right).normalized;
-				var collisionInfo = new CollisionInfo(obj, h.Item2, normal);
-				obj.SendMessage("OnCollide", collisionInfo, SendMessageOptions.DontRequireReceiver);
-				h.Item2.SendMessage("OnCollide", collisionInfo.GetOtherInfo(), SendMessageOptions.DontRequireReceiver);;
+				SendCollisionMessage(normal, obj, h.Item2);
+
 			} else {
 				obj.transform.position += v.Item1 * Vector3.up;
+				obj.oldPosition.y = obj.transform.position.y;
 			
+				// send message
 				var normal = (v.Item1 * Vector3.up).normalized;
-				var collisionInfo = new CollisionInfo(obj, v.Item2, normal);
-				obj.SendMessage("OnCollide", collisionInfo, SendMessageOptions.DontRequireReceiver);
-				v.Item2.SendMessage("OnCollide", collisionInfo.GetOtherInfo(), SendMessageOptions.DontRequireReceiver);;
+				SendCollisionMessage(normal, obj, v.Item2);
 			}
 		}
+	}
+
+	void Pass2 () {
+		for (int i = 0; i < dynList.Count; ++i) {
+			var obj = dynList[i];
+			if (obj.transform.position.x != obj.oldPosition.x) {
+				var h = CheckH(obj, i);
+
+				if (h.Item1 != 0) {
+					obj.transform.position += h.Item1 * Vector3.right;
+
+					// send message
+					var normal = (h.Item1 * Vector3.right).normalized;
+					SendCollisionMessage(normal, obj, h.Item2);
+				}
+			}
+
+			if (obj.transform.position.y != obj.oldPosition.y) {
+				var v = CheckV(obj, i);
+
+				if (v.Item1 != 0) {
+					obj.transform.position += v.Item1 * Vector3.up;
+
+					// send message
+					var normal = (v.Item1 * Vector3.up).normalized;
+					SendCollisionMessage(normal, obj, v.Item2);
+				}
+			}
+		}
+	}
+
+	private void SendCollisionMessage (Vector3 normal, PhysicsEntity obj, PhysicsEntity other) {
+		var collisionInfo = new CollisionInfo(obj, other, normal);
+		obj.SendMessage("OnCollide", collisionInfo, SendMessageOptions.DontRequireReceiver);
+		other.SendMessage("OnCollide", collisionInfo.GetOtherInfo(), SendMessageOptions.DontRequireReceiver);
 	}
 
 	private IEnumerable<PhysicsEntity> GetHitObjects (int i) {
