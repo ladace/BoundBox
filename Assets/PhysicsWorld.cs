@@ -36,11 +36,9 @@ public class PhysicsWorld : MonoBehaviour {
 			var h = CheckH(obj, i);
 			var v = CheckV(obj, i);
 			if (h.Item1 == 0 && v.Item1 == 0) {
-				if (IsHitting(i)) { // it might be still hitting
-					// shift the horizontal position first
-					// the second pass will deal with the vertical movement
-					obj.oldPosition.x = obj.transform.position.x;
-				}
+				// shift the horizontal position first
+				// the second pass will deal with the vertical movement
+				obj.oldPosition.x = obj.transform.position.x;
 				continue;
 			}
 			if (h.Item1 != 0 && (v.Item1 == 0 || Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1))) {
