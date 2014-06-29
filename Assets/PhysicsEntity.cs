@@ -73,7 +73,7 @@ public class PhysicsEntity : MonoBehaviour {
 			Rect rc = shape;
 			return new Rect(rc.x + transform.position.x, rc.y + transform.position.y, rc.width, rc.height).Contains(point);
 		}
-		return false;//Todo: For rotated rects Undone yet
+		return false;
 	}
 
 	void OnDrawGizmos () {

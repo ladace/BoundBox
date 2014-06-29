@@ -88,10 +88,14 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	private IEnumerable<PhysicsEntity> GetHitObjects (int i) {
-		for (int j = 0; j < stcList.Count; ++j)
-			yield return stcList[j];
-		for (int j = i + 1; j < dynList.Count; ++j)
-			yield return dynList[j];
+		for (int j = 0; j < stcList.Count; ++j) {
+			if (dynList[i]._RoughTestIntersecting(stcList[j]))
+				yield return stcList[j];
+		}
+		for (int j = i + 1; j < dynList.Count; ++j) {
+			if (dynList[i]._RoughTestIntersecting(dynList[j]))
+				yield return dynList[j];
+		}
 	}
 
 	private bool IsHitting (int i) {
@@ -172,19 +176,4 @@ public class PhysicsWorld : MonoBehaviour {
 	static protected Rect GetOffsetRect(float x, float y, Rect rc) {
 		return new Rect(x + rc.x, y + rc.y, rc.width, rc.height);
 	}
-
-	// --
-	// Available functions
-
-	// public bool CheckRect (Rect rc) { // unchecked
-	// 	foreach (PhysicsEntity obj in dynList) {
-	// 		if (obj.IntersectRect(rc, Vector3.zero).HasValue)
-	// 			return true;
-	// 	}
-	// 	foreach (PhysicsEntity obj in stcList) {
-	// 		if (obj.IntersectRect(rc, Vector3.zero).HasValue)
-	// 			return true;
-	// 	}
-	// 	return false;
-	// }
 }
