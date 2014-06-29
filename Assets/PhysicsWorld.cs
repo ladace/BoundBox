@@ -8,6 +8,8 @@ public class PhysicsWorld : MonoBehaviour {
 	public List<PhysicsEntity> stcList;
 	public List<PhysicsEntity> dynList;
 
+	static private float EPS = 1e-6f;
+
 	public PhysicsWorld () {
 		ins = this;
 		stcList = new List<PhysicsEntity>();
@@ -64,6 +66,8 @@ public class PhysicsWorld : MonoBehaviour {
 					Solve(obj, v.Item2, v.Item1 * Vector3.up);
 				}
 			}
+
+			obj.oldPosition = obj.transform.position;
 		}
 	}
 
@@ -71,8 +75,8 @@ public class PhysicsWorld : MonoBehaviour {
 		if (other.immovable)
 			obj.transform.position += recoverV;
 		else {
-			obj.transform.position += recoverV;//some bugs
-			other.transform.position -= recoverV;
+			obj.transform.position += recoverV * 0.5001f;// eps
+			other.transform.position -= recoverV * 0.5001f;
 		}
 		SendCollisionMessage(recoverV.normalized, obj, other);
 	}
@@ -140,7 +144,7 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	public bool RectOverlap (Rect a, Rect b) {
-		return a.xMax > b.xMin && a.xMin < b.xMax && a.yMax > b.yMin && a.yMin < b.yMax;
+		return a.xMax > b.xMin + EPS && a.xMin + EPS < b.xMax && a.yMax > b.yMin + EPS && a.yMin + EPS < b.yMax;
 	}
 
 	// return the distance a should move
