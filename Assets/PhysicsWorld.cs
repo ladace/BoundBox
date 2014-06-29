@@ -43,20 +43,11 @@ public class PhysicsWorld : MonoBehaviour {
 				continue;
 			}
 			if (h.Item1 != 0 && (v.Item1 == 0 || Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1))) {
-				obj.transform.position += h.Item1 * Vector3.right;
+				Solve(obj, h.Item2, h.Item1 * Vector3.right);
 				obj.oldPosition.x = obj.transform.position.x;
-
-				// send message
-				var normal = (h.Item1 * Vector3.right).normalized;
-				SendCollisionMessage(normal, obj, h.Item2);
-
 			} else {
-				obj.transform.position += v.Item1 * Vector3.up;
-				obj.oldPosition.y = obj.transform.position.y;
-			
-				// send message
-				var normal = (v.Item1 * Vector3.up).normalized;
-				SendCollisionMessage(normal, obj, v.Item2);
+				Solve(obj, v.Item2, v.Item1 * Vector3.up);
+				obj.oldPosition.y = obj.transform.position.y;			
 			}
 
 			// pass 2
@@ -64,11 +55,7 @@ public class PhysicsWorld : MonoBehaviour {
 				h = CheckH(obj, i);
 
 				if (h.Item1 != 0) {
-					obj.transform.position += h.Item1 * Vector3.right;
-
-					// send message
-					var normal = (h.Item1 * Vector3.right).normalized;
-					SendCollisionMessage(normal, obj, h.Item2);
+					Solve(obj, h.Item2, h.Item1 * Vector3.right);
 				}
 			}
 
@@ -76,14 +63,15 @@ public class PhysicsWorld : MonoBehaviour {
 				v = CheckV(obj, i);
 
 				if (v.Item1 != 0) {
-					obj.transform.position += v.Item1 * Vector3.up;
-
-					// send message
-					var normal = (v.Item1 * Vector3.up).normalized;
-					SendCollisionMessage(normal, obj, v.Item2);
+					Solve(obj, v.Item2, v.Item1 * Vector3.up);
 				}
 			}
 		}
+	}
+
+	private void Solve (PhysicsEntity obj, PhysicsEntity other, Vector3 recoverV) {
+		obj.transform.position += recoverV;
+		SendCollisionMessage(recoverV.normalized, obj, other);
 	}
 
 	private void SendCollisionMessage (Vector3 normal, PhysicsEntity obj, PhysicsEntity other) {
