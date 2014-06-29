@@ -40,9 +40,7 @@ public class PhysicsWorld : MonoBehaviour {
 				// shift the horizontal position first
 				// the second pass will deal with the vertical movement
 				obj.oldPosition.x = obj.transform.position.x;
-				continue;
-			}
-			if (h.Item1 != 0 && (v.Item1 == 0 || Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1))) {
+			} else if (h.Item1 != 0 && (v.Item1 == 0 || Mathf.Abs(h.Item1) < Mathf.Abs(v.Item1))) {
 				Solve(obj, h.Item2, h.Item1 * Vector3.right);
 				obj.oldPosition.x = obj.transform.position.x;
 			} else {
@@ -50,7 +48,7 @@ public class PhysicsWorld : MonoBehaviour {
 				obj.oldPosition.y = obj.transform.position.y;			
 			}
 
-			// pass 2
+			//// pass 2
 			if (obj.transform.position.x != obj.oldPosition.x) {
 				h = CheckH(obj, i);
 
@@ -70,7 +68,12 @@ public class PhysicsWorld : MonoBehaviour {
 	}
 
 	private void Solve (PhysicsEntity obj, PhysicsEntity other, Vector3 recoverV) {
-		obj.transform.position += recoverV;
+		if (other.immovable)
+			obj.transform.position += recoverV;
+		else {
+			obj.transform.position += recoverV;//some bugs
+			other.transform.position -= recoverV;
+		}
 		SendCollisionMessage(recoverV.normalized, obj, other);
 	}
 
