@@ -32,6 +32,10 @@ public class PhysicsEntity : MonoBehaviour {
 
 	public Vector3 oldPosition;
 
+	public Vector3 moveVector {
+		get { return transform.position - oldPosition; }
+	}
+
 	void Awake () {
 		oldPosition = transform.position;
 	}
