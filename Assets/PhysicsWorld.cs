@@ -36,32 +36,39 @@ public class PhysicsWorld : MonoBehaviour {
 		for (int i = 0; i < dynList.Count; ++i) {
 			var obj = dynList[i];
 
-			var hitlst = GetHitObjects(i).ToList();
+			if ((Vector2)obj.moveVector != Vector2.zero) {
 
-			hitlst.Sort((a, b) => Compare(Project(a.GetWorldRectOrtho(), obj.moveVector.normalized), Project(b.GetWorldRectOrtho(), obj.moveVector.normalized)));
-			// resolve
-			foreach (var other in hitlst) {
-				var lRc = obj.GetWorldRectOrtho();
-				var rRc = other.GetWorldRectOrtho();
+				var hitlst = GetHitObjects(i).ToList();
 
-				if (RectOverlap(lRc, rRc)) {
-					float hl = rRc.xMin - lRc.xMax;
-					float hr = rRc.xMax - lRc.xMin;
-					float h = obj.moveVector.x > 0 ? hl : hr;
+				hitlst.Sort((a, b) => Compare(Project(a.GetWorldRectOrtho(), obj.moveVector.normalized), Project(b.GetWorldRectOrtho(), obj.moveVector.normalized)));
+				// resolve
+				foreach (var other in hitlst) {
+					var lRc = obj.GetWorldRectOrtho();
+					var rRc = other.GetWorldRectOrtho();
 
-					float vd = rRc.yMin - lRc.yMax;
-					float vu = rRc.yMax - lRc.yMin;
-					float v = obj.moveVector.y > 0 ? vd : vu;
+					if (RectOverlap(lRc, rRc)) {
+						float hl = rRc.xMin - lRc.xMax;
+						float hr = rRc.xMax - lRc.xMin;
+						float h = obj.moveVector.x - other.moveVector.x > 0 ? hl : hr;
 
-					Vector2 resDir = Mathf.Abs(h) < Mathf.Abs(v) ? h * Vector2.right : v * Vector2.up;
+						float rh = h * obj.moveVector.x > 0 ? 0 : Mathf.Abs(h) > Mathf.Abs(obj.moveVector.x) ? -obj.moveVector.x : h;
 
-					obj.transform.position += (Vector3)resDir;
+						float vd = rRc.yMin - lRc.yMax;
+						float vu = rRc.yMax - lRc.yMin;
+						float v = obj.moveVector.y - other.moveVector.y > 0 ? vd : vu;
 
-					SendCollisionMessage(resDir.normalized, obj, other);
+						float rv = v * obj.moveVector.y > 0 ? 0 : Mathf.Abs(v) > Mathf.Abs(obj.moveVector.y) ? -obj.moveVector.y : v;
+
+						Vector2 resDir = Mathf.Abs(h) < Mathf.Abs(v) ? rh * Vector2.right : rv * Vector2.up;
+
+						if (resDir != Vector2.zero) {
+							obj.transform.position += (Vector3)resDir;
+
+							SendCollisionMessage(resDir.normalized, obj, other);							
+						}
+					}
 				}
-
 			}
-
 		}
 	}
 
@@ -76,7 +83,8 @@ public class PhysicsWorld : MonoBehaviour {
 			if (dynList[i]._RoughTestIntersecting(stcList[j]) && RectOverlap(dynList[i].GetWorldRectOrtho(), stcList[j].GetWorldRectOrtho()))
 				yield return stcList[j];
 		}
-		for (int j = i + 1; j < dynList.Count; ++j) {
+		for (int j = 0; j < dynList.Count; ++j) {
+			if (j == i) continue;
 			if (dynList[i]._RoughTestIntersecting(dynList[j]) && RectOverlap(dynList[i].GetWorldRectOrtho(), dynList[j].GetWorldRectOrtho()))
 				yield return dynList[j];
 		}
