@@ -72,6 +72,12 @@ public class PhysicsEntity : MonoBehaviour {
 		return new Rect(transform.position.x + rc.x, transform.position.y + rc.y, rc.width, rc.height);
 	}
 
+	public Rect GetOldWorldRectOrtho () {
+		Rect rc = shape;
+		return new Rect(oldPosition.x + rc.x, oldPosition.y + rc.y, rc.width, rc.height);
+	}
+
+
 	public bool Contains (Vector2 point) {
 		if (transform.rotation == Quaternion.identity) {
 			Rect rc = shape;

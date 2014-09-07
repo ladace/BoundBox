@@ -44,7 +44,7 @@ public class PhysicsWorld : MonoBehaviour {
 				// resolve
 				foreach (var other in hitlst) {
 					var lRc = obj.GetWorldRectOrtho();
-					var rRc = other.GetWorldRectOrtho();
+					var rRc = other.GetOldWorldRectOrtho();
 
 					if (RectOverlap(lRc, rRc)) {
 						float hl = rRc.xMin - lRc.xMax;
