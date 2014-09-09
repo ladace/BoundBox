@@ -36,6 +36,10 @@ public class PhysicsEntity : MonoBehaviour {
 		get { return transform.position - oldPosition; }
 	}
 
+	public bool isOrtho {
+		get { return transform.rotation == Quaternion.identity; }
+	}
+
 	void Awake () {
 		oldPosition = transform.position;
 	}
@@ -89,6 +93,6 @@ public class PhysicsEntity : MonoBehaviour {
 	void OnDrawGizmos () {
 		Color color = Color.blue;
 		Rect rc = shape;
-		Utils.DrawRectGizmos(rc, color, transform.position, Quaternion.identity);//transform.rotation);
+		Utils.DrawRectGizmos(rc, color, transform.position, transform.rotation);
 	}
 }

@@ -16,7 +16,6 @@ public class CollisionTest : MonoBehaviour {
 
 	void OnGUI () {
 		GUI.Box(new Rect(0, 0, Screen.width, 40), touching);
-		if (touching != "") Debug.Log(touching);
 	}
 
 }

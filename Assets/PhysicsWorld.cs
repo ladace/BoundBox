@@ -43,28 +43,64 @@ public class PhysicsWorld : MonoBehaviour {
 				hitlst.Sort((a, b) => Compare(Project(a.GetWorldRectOrtho(), obj.moveVector.normalized), Project(b.GetWorldRectOrtho(), obj.moveVector.normalized)));
 				// resolve
 				foreach (var other in hitlst) {
-					var lRc = obj.GetWorldRectOrtho();
-					var rRc = other.GetOldWorldRectOrtho();
+					if (obj.isOrtho && other.isOrtho) {
+						// resolve in the ortho way
+						var lRc = obj.GetWorldRectOrtho();
+						var rRc = other.GetOldWorldRectOrtho();
 
-					if (RectOverlap(lRc, rRc)) {
-						float hl = rRc.xMin - lRc.xMax;
-						float hr = rRc.xMax - lRc.xMin;
-						float h = obj.moveVector.x - other.moveVector.x > 0 ? hl : hr;
+						if (RectOverlap(lRc, rRc)) {
+							float hl = rRc.xMin - lRc.xMax;
+							float hr = rRc.xMax - lRc.xMin;
+							float h = obj.moveVector.x - other.moveVector.x > 0 ? hl : hr;
 
-						float rh = h * obj.moveVector.x > 0 ? 0 : Mathf.Abs(h) > Mathf.Abs(obj.moveVector.x) ? -obj.moveVector.x : h;
+							float vd = rRc.yMin - lRc.yMax;
+							float vu = rRc.yMax - lRc.yMin;
+							float v = obj.moveVector.y - other.moveVector.y > 0 ? vd : vu;
 
-						float vd = rRc.yMin - lRc.yMax;
-						float vu = rRc.yMax - lRc.yMin;
-						float v = obj.moveVector.y - other.moveVector.y > 0 ? vd : vu;
+							float rh = h * obj.moveVector.x > 0 ? 0 : Mathf.Abs(h) > Mathf.Abs(obj.moveVector.x) ? -obj.moveVector.x : h;
+							float rv = v * obj.moveVector.y > 0 ? 0 : Mathf.Abs(v) > Mathf.Abs(obj.moveVector.y) ? -obj.moveVector.y : v;
 
-						float rv = v * obj.moveVector.y > 0 ? 0 : Mathf.Abs(v) > Mathf.Abs(obj.moveVector.y) ? -obj.moveVector.y : v;
+							Vector2 resDir = Mathf.Abs(h) < Mathf.Abs(v) ? rh * Vector2.right : rv * Vector2.up;
 
-						Vector2 resDir = Mathf.Abs(h) < Mathf.Abs(v) ? rh * Vector2.right : rv * Vector2.up;
+							if (resDir != Vector2.zero) {
+								obj.transform.position += (Vector3)resDir;
 
-						if (resDir != Vector2.zero) {
-							obj.transform.position += (Vector3)resDir;
+								SendCollisionMessage(resDir.normalized, obj, other);							
+							}
+						}
+					} else {
+						// resolve in the rotated way
+						Rect aRc = obj.shape,
+							 bRc = other.shape;
 
-							SendCollisionMessage(resDir.normalized, obj, other);							
+						bool collide = true;
+
+						Vector2? resDir = null;
+						foreach (Vector2 axis in Geometry.AxesOfRotatedRect(obj.transform.rotation)) {
+							if (!_IntersectRectOnAxis (aRc, bRc, obj.transform, other.transform, axis, ref resDir)) {
+								collide = false;
+								break;
+							}
+						}
+
+						if (collide) {
+							foreach (Vector2 axis in Geometry.AxesOfRotatedRect(other.transform.rotation)) {
+								if (!_IntersectRectOnAxis (aRc, bRc, obj.transform, other.transform, axis, ref resDir)) {
+									collide = false;
+									break;
+								}
+							}
+						}
+
+						if (collide && resDir.HasValue) {
+							float h = resDir.Value.x;
+							float v = resDir.Value.y;
+
+							float rh = h * obj.moveVector.x > 0 ? 0 : Mathf.Abs(h) > Mathf.Abs(obj.moveVector.x) ? -obj.moveVector.x : h;
+							float rv = v * obj.moveVector.y > 0 ? 0 : Mathf.Abs(v) > Mathf.Abs(obj.moveVector.y) ? -obj.moveVector.y : v;
+
+							obj.transform.position += new Vector3(rh, rv);
+							SendCollisionMessage(resDir.Value.normalized, obj, other);							
 						}
 					}
 				}
@@ -80,12 +116,12 @@ public class PhysicsWorld : MonoBehaviour {
 
 	private IEnumerable<PhysicsEntity> GetHitObjects (int i) {
 		for (int j = 0; j < stcList.Count; ++j) {
-			if (dynList[i]._RoughTestIntersecting(stcList[j]) && RectOverlap(dynList[i].GetWorldRectOrtho(), stcList[j].GetWorldRectOrtho()))
+			if (dynList[i]._RoughTestIntersecting(stcList[j]))
 				yield return stcList[j];
 		}
 		for (int j = 0; j < dynList.Count; ++j) {
 			if (j == i) continue;
-			if (dynList[i]._RoughTestIntersecting(dynList[j]) && RectOverlap(dynList[i].GetWorldRectOrtho(), dynList[j].GetWorldRectOrtho()))
+			if (dynList[i]._RoughTestIntersecting(dynList[j]))
 				yield return dynList[j];
 		}
 	}
@@ -138,5 +174,21 @@ public class PhysicsWorld : MonoBehaviour {
 					     Vector2.Dot(new Vector2(rc.xMax, rc.yMin), direction),
 						 Vector2.Dot(new Vector2(rc.xMax, rc.yMax), direction),
 						 Vector2.Dot(new Vector2(rc.xMin, rc.yMax), direction));
+	}
+
+	static protected bool _IntersectRectOnAxis (Rect aRc, Rect bRc, Transform aTrans, Transform bTrans, Vector2 axis, ref Vector2? minCross) {
+		var aR = Geometry.ProjectRect(aRc, aTrans.position, aTrans.rotation, axis);
+		var bR = Geometry.ProjectRect(bRc, bTrans.position, bTrans.rotation, axis);
+		// the shortest distance to move aR out of bR
+		float overl = Utils.SegmentInto(aR, bR);
+		if (overl == 0) return false;
+		else {
+			if (minCross.HasValue) {
+				if (Mathf.Abs(overl) < minCross.Value.magnitude) {
+					minCross = overl * axis;
+				}
+			} else minCross = overl * axis;
+			return true;
+		}
 	}
 }
