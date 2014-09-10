@@ -63,7 +63,7 @@ public class PhysicsWorld : MonoBehaviour {
 							Vector2 resDir = Mathf.Abs(h) < Mathf.Abs(v) ? rh * Vector2.right : rv * Vector2.up;
 
 							if (resDir != Vector2.zero) {
-								obj.transform.position += (Vector3)resDir;
+								if (!obj.trigger && !other.trigger) obj.transform.position += (Vector3)resDir;
 
 								SendCollisionMessage(resDir.normalized, obj, other);							
 							}
@@ -99,7 +99,7 @@ public class PhysicsWorld : MonoBehaviour {
 							float rh = h * obj.moveVector.x > 0 ? 0 : Mathf.Abs(h) > Mathf.Abs(obj.moveVector.x) ? -obj.moveVector.x : h;
 							float rv = v * obj.moveVector.y > 0 ? 0 : Mathf.Abs(v) > Mathf.Abs(obj.moveVector.y) ? -obj.moveVector.y : v;
 
-							obj.transform.position += new Vector3(rh, rv);
+							if (!obj.trigger && !other.trigger) obj.transform.position += new Vector3(rh, rv);
 							SendCollisionMessage(resDir.Value.normalized, obj, other);							
 						}
 					}
@@ -137,28 +137,6 @@ public class PhysicsWorld : MonoBehaviour {
 
 	public bool RectOverlap (Rect a, Rect b) {
 		return a.xMax > b.xMin + EPS && a.xMin + EPS < b.xMax && a.yMax > b.yMin + EPS && a.yMin + EPS < b.yMax;
-	}
-
-	// return the distance a should move
-	// position - move right
-	// negative - move left
-	public Tuple<float, float> HIntersectDepth (Rect a, Rect b) {
-		if (RectOverlap(a, b)) {
-			float d1 = a.xMax - b.xMin,
-				  d2 = b.xMax - a.xMin;
-			return new Tuple<float, float>(-d1, d2);
-		} else return new Tuple<float, float>(0, 0);
-	}
-
-	// return the distance a should move
-	// position - move up
-	// negative - move down
-	public Tuple<float, float> VIntersectDepth (Rect a, Rect b) {
-		if (RectOverlap(a, b)) {
-			float d1 = a.yMax - b.yMin,
-				  d2 = b.yMax - a.yMin;
-			return new Tuple<float, float>(-d1, d2);
-		} else return new Tuple<float, float>(0, 0);
 	}
 
 	static protected Rect GetOffsetRect (float x, float y, Rect rc) {

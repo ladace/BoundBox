@@ -27,6 +27,7 @@ public class CollisionInfo {
 
 public class PhysicsEntity : MonoBehaviour {
 	public bool immovable = false; // now it can't be changed during the game
+	public bool trigger = false; // the trigger won't push objects back
 
 	public bool debugLog = false;
 
@@ -44,18 +45,18 @@ public class PhysicsEntity : MonoBehaviour {
 		oldPosition = transform.position;
 	}
 
-	void Start () {
+	void OnEnable () {
 		PhysicsWorld.ins.Add(this);
+	}
+
+	void OnDisable () {
+		PhysicsWorld.ins.Remove(this);	
+
 	}
 
 	public void PhysicsUpdate () {
 		oldPosition = transform.position;
 	}
-
-	public void OnDestroy() {
-		PhysicsWorld.ins.Remove(this);
-	}
-
 	// only support box shapes
 	public Rect shape = new Rect(0, 0, 16, 16);
 	public float shapeRadius {
