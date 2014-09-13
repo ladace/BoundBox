@@ -29,6 +29,9 @@ public class PhysicsEntity : MonoBehaviour {
 	public bool immovable = false; // now it can't be changed during the game
 	public bool trigger = false; // the trigger won't push objects back
 
+	[Range(0, 1)]
+	public float chamfer = 0.0f;
+
 	public bool debugLog = false;
 
 	public Vector3 oldPosition;
@@ -59,8 +62,8 @@ public class PhysicsEntity : MonoBehaviour {
 	}
 	// only support box shapes
 	public Rect shape = new Rect(0, 0, 16, 16);
-	public float shapeRadius {
-		get { return Mathf.Max(Mathf.Abs(shape.x + shape.y), Mathf.Abs(shape.x + shape.y + shape.width + shape.height)); }
+	public float shapeRadius { // TODO Debug
+		get { return Mathf.Max(Mathf.Abs(shape.x), Mathf.Abs(shape.x + shape.width)) + Mathf.Max(Mathf.Abs(shape.y), Mathf.Abs(shape.y + shape.height)); }
 	}
 
 	public bool _RoughTestIntersecting (PhysicsEntity other) {
@@ -95,5 +98,11 @@ public class PhysicsEntity : MonoBehaviour {
 		Color color = Color.blue;
 		Rect rc = shape;
 		Utils.DrawRectGizmos(rc, color, transform.position, transform.rotation);
+
+		float ratio = chamfer / 2;
+		Gizmos.DrawLine(new Vector3(rc.x + rc.width * ratio, rc.y) + transform.position, new Vector3(rc.x, rc.y + rc.height * ratio) + transform.position);
+		Gizmos.DrawLine(new Vector3(rc.x + rc.width * (1 - ratio), rc.y) + transform.position, new Vector3(rc.xMax, rc.y + rc.height * ratio) + transform.position);
+		Gizmos.DrawLine(new Vector3(rc.x + rc.width * (1 - ratio), rc.yMax) + transform.position, new Vector3(rc.xMax, rc.y + rc.height * (1 - ratio)) + transform.position);
+		Gizmos.DrawLine(new Vector3(rc.x + rc.width * ratio, rc.yMax) + transform.position, new Vector3(rc.x, rc.y + rc.height * (1 - ratio)) + transform.position);
 	}
 }

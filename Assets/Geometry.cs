@@ -15,6 +15,10 @@ public class Geometry {
         return new Vector2[] { rotation * Vector2.up, rotation * Vector2.right };
     }
 
+    public static Vector2[] CrossAxesOfRotatedRect (Quaternion rotation) {
+        return new Vector2[] { rotation * new Vector2(1, 1).normalized, rotation * new Vector2(1, -1).normalized };
+    }
+
     public static Tuple<float, float> ProjectRect (Rect rc, Vector2 translation, Quaternion rotation, Vector2 axis) {
         var ps = PointsOfRect(rc).Select(p => Vector2.Dot((Vector3)translation + (rotation * p), axis));
         return new Tuple<float, float>(ps.Min(), ps.Max());

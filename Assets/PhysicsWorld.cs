@@ -62,6 +62,19 @@ public class PhysicsWorld : MonoBehaviour {
 
 							Vector2 resDir = Mathf.Abs(h) < Mathf.Abs(v) ? rh * Vector2.right : rv * Vector2.up;
 
+							if (obj.chamfer > 0.001f || other.chamfer > 0.001f) {
+								bool collide = true;
+								foreach (Vector2 axis in Geometry.CrossAxesOfRotatedRect(obj.transform.rotation)) {
+									if (!_IntersectChamferRectOnAxis(obj.shape, other.shape, obj.transform, other.transform, obj.chamfer, other.chamfer, axis, ref resDir)) {
+										collide = false;
+										break;
+									}
+								}
+
+								if (!collide) continue;
+
+							}
+
 							if (resDir != Vector2.zero) {
 								if (!obj.trigger && !other.trigger) obj.transform.position += (Vector3)resDir;
 
@@ -166,6 +179,25 @@ public class PhysicsWorld : MonoBehaviour {
 					minCross = overl * axis;
 				}
 			} else minCross = overl * axis;
+			return true;
+		}
+	}
+
+	static protected bool _IntersectChamferRectOnAxis(Rect aRc, Rect bRc, Transform aTrans, Transform bTrans, float aChamfer, float bChamfer, Vector2 axis, ref Vector2 minCross) {
+		var aR = Geometry.ProjectRect(aRc, aTrans.position, aTrans.rotation, axis);
+		var bR = Geometry.ProjectRect(bRc, bTrans.position, bTrans.rotation, axis);
+
+		float aCutout = aChamfer / 4 * (aR.Item2 - aR.Item1);
+		aR = new Tuple<float, float>(aR.Item1 + aCutout, aR.Item2 - aCutout);
+		float bCutout = bChamfer / 4 * (bR.Item2 - bR.Item1);
+		bR = new Tuple<float, float>(bR.Item1 + bCutout, bR.Item2 - bCutout);
+		// the shortest distance to move aR out of bR
+		float overl = Utils.SegmentInto(aR, bR);
+		if (overl == 0) return false;
+		else {
+			if (Mathf.Abs(overl) < minCross.magnitude) {
+				minCross = overl * axis;
+			}
 			return true;
 		}
 	}
